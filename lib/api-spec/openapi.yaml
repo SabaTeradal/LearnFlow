@@ -1,0 +1,656 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: LearnFlow LMS API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: users
+    description: User profile operations
+  - name: courses
+    description: Course and video operations
+  - name: progress
+    description: Progress tracking operations
+  - name: quizzes
+    description: Quiz generation and submission
+  - name: achievements
+    description: Achievement tracking
+  - name: chat
+    description: AI chatbot operations
+  - name: dashboard
+    description: Dashboard summary data
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users/profile:
+    patch:
+      operationId: updateProfile
+      tags: [users]
+      summary: Update user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /courses:
+    get:
+      operationId: getCourses
+      tags: [courses]
+      summary: Get all courses
+      responses:
+        "200":
+          description: List of courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Course"
+
+  /courses/{courseId}:
+    get:
+      operationId: getCourse
+      tags: [courses]
+      summary: Get a single course with levels and videos
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Course detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseDetail"
+
+  /courses/{courseId}/levels/{levelId}/videos/{videoId}/progress:
+    post:
+      operationId: updateVideoProgress
+      tags: [progress]
+      summary: Mark video progress (complete or percentage)
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: levelId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VideoProgressInput"
+      responses:
+        "200":
+          description: Progress updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoProgress"
+
+  /quizzes/generate:
+    post:
+      operationId: generateQuiz
+      tags: [quizzes]
+      summary: Generate a quiz for a video
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizGenerateInput"
+      responses:
+        "200":
+          description: Generated quiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quiz"
+
+  /quizzes/submit:
+    post:
+      operationId: submitQuiz
+      tags: [quizzes]
+      summary: Submit quiz answers and get results
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizSubmission"
+      responses:
+        "200":
+          description: Quiz results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizResult"
+
+  /achievements:
+    get:
+      operationId: getAchievements
+      tags: [achievements]
+      summary: Get all achievements for the current user
+      responses:
+        "200":
+          description: List of achievements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Achievement"
+
+  /chat/message:
+    post:
+      operationId: sendChatMessage
+      tags: [chat]
+      summary: Send a message to the AI coding tutor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatMessageInput"
+      responses:
+        "200":
+          description: AI response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessageResponse"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get overall dashboard summary (progress, last video, achievements, improvements)
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required: [success]
+
+    RegisterInput:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [user, token]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+
+    User:
+      type: object
+      required: [id, name, email, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        theme:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    ProfileUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        theme:
+          type: string
+
+    Course:
+      type: object
+      required: [id, title, description, totalVideos, completedVideos, progressPercent]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        totalVideos:
+          type: integer
+        completedVideos:
+          type: integer
+        progressPercent:
+          type: number
+
+    CourseLevel:
+      type: object
+      required: [id, title, order, videos, progressPercent]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        order:
+          type: integer
+        progressPercent:
+          type: number
+        videos:
+          type: array
+          items:
+            $ref: "#/components/schemas/Video"
+
+    Video:
+      type: object
+      required: [id, title, duration, order, completed, progressPercent]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        duration:
+          type: string
+        order:
+          type: integer
+        completed:
+          type: boolean
+        progressPercent:
+          type: number
+        youtubeId:
+          type: ["string", "null"]
+
+    CourseDetail:
+      type: object
+      required: [id, title, description, levels, progressPercent]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        progressPercent:
+          type: number
+        levels:
+          type: array
+          items:
+            $ref: "#/components/schemas/CourseLevel"
+
+    VideoProgressInput:
+      type: object
+      required: [completed, progressPercent]
+      properties:
+        completed:
+          type: boolean
+        progressPercent:
+          type: number
+
+    VideoProgress:
+      type: object
+      required: [videoId, completed, progressPercent]
+      properties:
+        videoId:
+          type: integer
+        completed:
+          type: boolean
+        progressPercent:
+          type: number
+
+    QuizGenerateInput:
+      type: object
+      required: [videoId, videoTitle, levelTitle]
+      properties:
+        videoId:
+          type: integer
+        videoTitle:
+          type: string
+        levelTitle:
+          type: string
+
+    QuizQuestion:
+      type: object
+      required: [id, question, options, correctIndex]
+      properties:
+        id:
+          type: integer
+        question:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+        correctIndex:
+          type: integer
+
+    Quiz:
+      type: object
+      required: [videoId, questions]
+      properties:
+        videoId:
+          type: integer
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuizQuestion"
+
+    QuizAnswerInput:
+      type: object
+      required: [questionId, selectedIndex]
+      properties:
+        questionId:
+          type: integer
+        selectedIndex:
+          type: integer
+
+    QuizSubmission:
+      type: object
+      required: [videoId, videoTitle, answers]
+      properties:
+        videoId:
+          type: integer
+        videoTitle:
+          type: string
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuizAnswerInput"
+
+    QuizResult:
+      type: object
+      required: [score, totalQuestions, passed, feedback]
+      properties:
+        score:
+          type: integer
+        totalQuestions:
+          type: integer
+        passed:
+          type: boolean
+        feedback:
+          type: string
+        needsImprovement:
+          type: boolean
+
+    Achievement:
+      type: object
+      required: [id, title, description, icon, earned, earnedAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+        earned:
+          type: boolean
+        earnedAt:
+          type: ["string", "null"]
+        condition:
+          type: string
+
+    ChatMessage:
+      type: object
+      required: [role, content]
+      properties:
+        role:
+          type: string
+        content:
+          type: string
+
+    ChatMessageInput:
+      type: object
+      required: [message, history]
+      properties:
+        message:
+          type: string
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatMessage"
+
+    ChatMessageResponse:
+      type: object
+      required: [reply]
+      properties:
+        reply:
+          type: string
+
+    ImprovementItem:
+      type: object
+      required: [videoId, videoTitle, levelTitle, score, totalQuestions]
+      properties:
+        videoId:
+          type: integer
+        videoTitle:
+          type: string
+        levelTitle:
+          type: string
+        score:
+          type: integer
+        totalQuestions:
+          type: integer
+
+    RecentAchievement:
+      type: object
+      required: [id, title, icon, earnedAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        icon:
+          type: string
+        earnedAt:
+          type: string
+
+    LastWatchedVideo:
+      type: object
+      required: [videoId, videoTitle, levelTitle, courseId, progressPercent]
+      properties:
+        videoId:
+          type: integer
+        videoTitle:
+          type: string
+        levelTitle:
+          type: string
+        courseId:
+          type: integer
+        progressPercent:
+          type: number
+
+    DashboardSummary:
+      type: object
+      required: [overallProgressPercent, recentAchievements, improvements]
+      properties:
+        overallProgressPercent:
+          type: number
+        lastWatched:
+          $ref: "#/components/schemas/LastWatchedVideo"
+        recentAchievements:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecentAchievement"
+        improvements:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImprovementItem"

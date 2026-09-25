@@ -1,0 +1,1 @@
+- [Workspace package validation](workspace-package-validation.md) — shared TypeScript libraries need their runtime peers available as dev dependencies for composite checks.
